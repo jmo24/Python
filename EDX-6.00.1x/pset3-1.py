@@ -1,5 +1,6 @@
 #insert comment here
 #u=insert second test comment here
+#checking -v option in git
 def f(x):
 	import math
 	return 10*math.e**(math.log(0.5)/5.27 * x)
