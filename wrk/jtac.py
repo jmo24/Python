@@ -30,6 +30,11 @@
 # 06/17/2014
 # Moved to reusable functions. All old functions removed.
 
+# version 2.0
+# 06/17/2014
+# Support for butter added. Ugly hack, due to lack of permissions in playing around in the butter folder.
+
+
 
 from sys import argv
 import subprocess
@@ -45,16 +50,22 @@ args = parser.parse_args()
 
 
 case = args.case
-print case
-print args.butter
-
+print "\n"
+print "#########################################################################"
+print 'Case number is %s' %case
+print 'Butter option is %s' %args.butter
+print '\n'
 
 jtactools = '172.17.31.81'
 large_directory = '/volume/CSdata/jmohamed/cases/'
 butter_directory = '/volume/casedata/EPBG/'
 ftp_directory = '/volume/ftp/pub/incoming/'
 
-
+print 'Using jtac-tools server %s' %jtactools
+print 'FTP location is %s%s' %(ftp_directory,case)
+print 'Large location is %s%s' %(large_directory,case)
+print 'Butter location %s%s' %(butter_directory,case)
+print "\n\n"
 
 def check_directory(location, case):
 	location_ret = subprocess.call( "ssh %s 'ls -la %s%s'" %(jtactools,location,case), shell=True)
@@ -75,7 +86,8 @@ def copy_to_location(location1, location2, case): #use this function when doing 
 
 
 def sync_files(location1, location2, case): #use this function to sync between locations. Only the new files are copied.
-	print ""
+	print "\n"
+	print "#########################################################################"
 	#copy_ret = subprocess.call("ssh 172.17.31.81 'cp -R /volume/ftp/pub/incoming/%s/ /volume/CSdata/jmohamed/cases/%s/'" %(case,case), shell = True)
 	sync_ret = subprocess.call("ssh %s 'rsync -azvi --progress %s%s/ %s%s/'" %(jtactools,location1,case,location2,case), shell = True)
 	if sync_ret == 0:
@@ -88,6 +100,13 @@ def sync_files(location1, location2, case): #use this function to sync between l
 #large_ret = check_large_directory(case)
 #copy_ret = copy_ftp_large(case)
 
+def scp_files(location1, location2, case): #use this function to sync to butter. Hack because of lack of permission on the jtactools server.
+	print ""
+	scp_ret = subprocess.call("ssh %s 'scp -r %s%s/ %s%s/'" %(jtactools,location1,case,location2,case), shell = True)
+	if scp_ret == 0:
+		return scp_ret
+	else:
+		return "Error! In SCP files between between %s and %s" %(location1, location2) 
 
 
 
@@ -99,20 +118,23 @@ def sync(location1, location2, case): #main function
 		#print location2_ret
 		location2_ret = copy_to_location(location1, location2, case)
 		if location2_ret == 0:
-			print "\n\n Success! Files copied from %s to %s " %(location1,location2)
+			print "\n\n Success! Files copied from %s%s to %s%s " %(location1,case,location2,case)
 		else:
-			print "\n\n"
-			print "Error! Files were not copied from %s to %s " %(location1,location2)
+			print "\n"
+			print "Error! Files were not copied from %s%s to %s%s " %(location1,case,location2,case)
 	elif location1_ret == 0 and location2_ret == 0: # if folder exists in both location1 and the location2.
 		print "Folder exists at %s, Syncing now" %(location2)
 		sync_ret = sync_files(location1, location2, case)
 		#print sync_ret
 		if sync_ret == 0:
-			print "Success! Files copied from %s to %s" %(location1, location2)
+			print "\n"
+			print "Success! Files copied from %s%s to %s%s " %(location1,case,location2,case)
 		else:
-			print "Error! Files could not be synced between %s and %s" %(location1, location2)
+			print "\n"
+			print "Error! Files could not be synced between %s%s to %s%s " %(location1,case,location2,case)
 	else:
-		print 'Error! Folder does not exist in %s' %(location1)
+		print "\n"
+		print 'Error! Folder does not exist in %s%s' %(location1,case)
 
 
 
@@ -120,9 +142,15 @@ sync(ftp_directory, large_directory,case)
 
 
 if args.butter == True:
-	sync(large_directory,butter_directory,case)
-	print ('%s%s') %(butter_directory,case)
-
+	scp_ret =scp_files(large_directory,butter_directory,case)
+	print "\n#########################################################################"
+	print "Starting butter copy"
+	#print scp_ret, 'scp_ret'
+	if scp_ret == 0:
+		print "\nSuccess! Files copied from %s to %s%s " %(large_directory,butter_directory,case)
+		print "Butter Link is \\butter\casedata\EPBG\%s\n" %(case)
+	else:
+		print "Issue in copying to butter location %s%s" %(butter_directory,case)
 
 
 
