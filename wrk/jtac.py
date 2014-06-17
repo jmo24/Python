@@ -26,7 +26,9 @@
 # Removed hard coded jtactools server IP. Changed it to variable jtactools
 
 
-
+# version 1.5
+# 06/17/2014
+# Moved to reusable functions. All old functions removed.
 
 
 from sys import argv
@@ -52,60 +54,6 @@ large_directory = '/volume/CSdata/jmohamed/cases/'
 butter_directory = '/volume/casedata/EPBG/'
 ftp_directory = '/volume/ftp/pub/incoming/'
 
-'''
-def check_large_directory(case):
-	large_ret = subprocess.call( "ssh %s 'ls -la /volume/CSdata/jmohamed/cases/%s'" %(jtactools,case), shell=True)
-	#print large_ret, "Larger directory"
-	return large_ret
-
-def check_ftp_directory(case):
-	ftp_ret = subprocess.call( "ssh %s 'ls -la /volume/ftp/pub/incoming/%s'" %(jtactools,case), shell=True)
-	#print ftp_ret
-	return ftp_ret
-
-
-def copy_ftp_large(case):
-	print ""
-	mkdir_ret = subprocess.call("ssh %s 'mkdir /volume/CSdata/jmohamed/cases/%s'" %(jtactools,case), shell=True)
-	#copy_ret = subprocess.call("ssh 172.17.31.81 'cp -R /volume/ftp/pub/incoming/%s/ /volume/CSdata/jmohamed/cases/%s/'" %(case,case), shell = True)
-	copy_ret = subprocess.call("ssh %s 'rsync -azvi --progress /volume/ftp/pub/incoming/%s/ /volume/CSdata/jmohamed/cases/%s/'" %(jtactools,case,case), shell = True)
-	#print mkdir_ret
-	#print copy_ret
-	if mkdir_ret == 0:
-		return copy_ret
-	else:
-		return "Error! In making directory"
-
-def sync_ftp_large(case):
-	print ""
-	#copy_ret = subprocess.call("ssh 172.17.31.81 'cp -R /volume/ftp/pub/incoming/%s/ /volume/CSdata/jmohamed/cases/%s/'" %(case,case), shell = True)
-	sync_ret = subprocess.call("ssh %s 'rsync -azvi --progress /volume/ftp/pub/incoming/%s/ /volume/CSdata/jmohamed/cases/%s/'" %(jtactools,case,case), shell = True)
-	if sync_ret == 0:
-		return sync_ret
-	else:
-		return "Error! In Syncing directory"
-
-
-if ftp_ret == 0 and large_ret!= 0: # if folder exists in sftp but not in the larger location.
-	#print ftp_ret
-	#print large_ret
-	copy_ret = copy_ftp_large(case)
-	if copy_ret == 0:
-		print "\n\n Success! Files copied from sftp to larger location"
-	else:
-		print "\n\n"
-		print "Error! Files were not copied"
-elif ftp_ret == 0 and large_ret == 0: # if folder exists in both sftp and the larger location.
-	print "Folder exists, Syncing now"
-	sync_ret = sync_ftp_large(case)
-	#print sync_ret
-	if sync_ret == 0:
-		print "Success! Files copied from sftp to larger location"
-	else:
-		print "Error! Files could not be synced"
-else:
-	print 'Error! Folder does not exist in ftp'
-'''
 
 
 def check_directory(location, case):
