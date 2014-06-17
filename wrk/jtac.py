@@ -38,15 +38,21 @@ import argparse
 parser = argparse.ArgumentParser(description='Run program using: \n python jtac.py 2014-0602-0555 [-b]')
 parser.add_argument('case', help='Case number')
 parser.add_argument('-b', '--butter', help='Give this option if you want to sync from large to butter', action='store_true')
+parser.add_argument('-a', '--attachment', help='Give this option if you want to sync from Case Manager to both large and butter', action='store_true')
 args = parser.parse_args()
 
 
 case = args.case
+print case
 print args.butter
 
 
 jtactools = '172.17.31.81'
+large_directory = '/volume/CSdata/jmohamed/cases/'
+butter_directory = '/volume/casedata/EPBG/'
+ftp_directory = '/volume/ftp/pub/incoming/'
 
+'''
 def check_large_directory(case):
 	large_ret = subprocess.call( "ssh %s 'ls -la /volume/CSdata/jmohamed/cases/%s'" %(jtactools,case), shell=True)
 	#print large_ret, "Larger directory"
@@ -80,12 +86,6 @@ def sync_ftp_large(case):
 		return "Error! In Syncing directory"
 
 
-ftp_ret = check_ftp_directory(case)
-large_ret = check_large_directory(case)
-#copy_ret = copy_ftp_large(case)
-
-
-
 if ftp_ret == 0 and large_ret!= 0: # if folder exists in sftp but not in the larger location.
 	#print ftp_ret
 	#print large_ret
@@ -105,34 +105,75 @@ elif ftp_ret == 0 and large_ret == 0: # if folder exists in both sftp and the la
 		print "Error! Files could not be synced"
 else:
 	print 'Error! Folder does not exist in ftp'
+'''
 
 
-def sync_function(location1, location2,case):
-	if location1_ret == 0 and location2_ret!= 0: # if folder exists in location1 but not in the location2.
+def check_directory(location, case):
+	location_ret = subprocess.call( "ssh %s 'ls -la %s%s'" %(jtactools,location,case), shell=True)
 	#print ftp_ret
-	#print large_ret
-	location2_ret = copy_location(case)
+	return location_ret
+
+def copy_to_location(location1, location2, case): #use this function when doing initial copy
+	print ""
+	mkdir_ret = subprocess.call("ssh %s 'mkdir %s%s'" %(jtactools,location2,case), shell=True)
+	#mkdir_ret = subprocess.call("ssh %s 'mkdir %s%s'" %(jtactools,location2,case), shell=True)
+	copy_ret = subprocess.call("ssh %s 'rsync -azvi --progress %s%s/ %s%s/'" %(jtactools,location1,case,location2,case), shell = True)
+	#print mkdir_ret
+	#print copy_ret
+	if mkdir_ret == 0:
+		return copy_ret
+	else:
+		return "Error! In making directory at %s" %(location2)
+
+
+def sync_files(location1, location2, case): #use this function to sync between locations. Only the new files are copied.
+	print ""
+	#copy_ret = subprocess.call("ssh 172.17.31.81 'cp -R /volume/ftp/pub/incoming/%s/ /volume/CSdata/jmohamed/cases/%s/'" %(case,case), shell = True)
+	sync_ret = subprocess.call("ssh %s 'rsync -azvi --progress %s%s/ %s%s/'" %(jtactools,location1,case,location2,case), shell = True)
+	if sync_ret == 0:
+		return sync_ret
+	else:
+		return "Error! In Syncing directory between %s and %s" %(location1, location2) 
+
+
+#ftp_ret = check_ftp_directory(case)
+#large_ret = check_large_directory(case)
+#copy_ret = copy_ftp_large(case)
+
+
+
+
+def sync(location1, location2, case): #main function
+	location1_ret = check_directory(location1,case)
+	location2_ret = check_directory(location2,case)
+	if location1_ret == 0 and location2_ret!= 0: # if folder exists in location1 but not in the location2.
+		#print location1_ret
+		#print location2_ret
+		location2_ret = copy_to_location(location1, location2, case)
 		if location2_ret == 0:
-			print "\n\n Success! Files copied from %s to %s location" %(location1,location2)
+			print "\n\n Success! Files copied from %s to %s " %(location1,location2)
 		else:
 			print "\n\n"
-			print "Error! Files were not copied"
-	elif ftp_ret == 0 and large_ret == 0: # if folder exists in both sftp and the larger location.
-		print "Folder exists, Syncing now"
-		sync_ret = sync_ftp_large(case)
+			print "Error! Files were not copied from %s to %s " %(location1,location2)
+	elif location1_ret == 0 and location2_ret == 0: # if folder exists in both location1 and the location2.
+		print "Folder exists at %s, Syncing now" %(location2)
+		sync_ret = sync_files(location1, location2, case)
 		#print sync_ret
 		if sync_ret == 0:
-			print "Success! Files copied from sftp to larger location"
+			print "Success! Files copied from %s to %s" %(location1, location2)
 		else:
-			print "Error! Files could not be synced"
+			print "Error! Files could not be synced between %s and %s" %(location1, location2)
 	else:
-		print 'Error! Folder does not exist in ftp'
+		print 'Error! Folder does not exist in %s' %(location1)
 
 
 
+sync(ftp_directory, large_directory,case)
 
 
-
+if args.butter == True:
+	sync(large_directory,butter_directory,case)
+	print ('%s%s') %(butter_directory,case)
 
 
 
