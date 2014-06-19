@@ -35,6 +35,10 @@
 # Support for butter added. Ugly hack, due to lack of permissions in playing around in the butter folder.
 
 
+# version 2.1
+# 06/17/2014
+# Support for butter added. Ugly hack, due to lack of permissions in playing around in the butter folder.
+
 
 from sys import argv
 import subprocess
@@ -46,6 +50,7 @@ parser = argparse.ArgumentParser(description='Run program using: \n python jtac.
 parser.add_argument('case', help='Case number')
 parser.add_argument('-b', '--butter', help='Give this option if you want to sync from large to butter', action='store_true')
 parser.add_argument('-a', '--attachment', help='Give this option if you want to sync from Case Manager to both large and butter', action='store_true')
+parser.add_argument('-e', '--ebpg', help='Use this option, to avoid storing under EPBG in butter. Legacy support', action='store_true')
 args = parser.parse_args()
 
 
@@ -60,6 +65,11 @@ jtactools = '172.17.31.81'
 large_directory = '/volume/CSdata/jmohamed/cases/'
 butter_directory = '/volume/casedata/EPBG/'
 ftp_directory = '/volume/ftp/pub/incoming/'
+
+if args.ebpg == True:
+	butter_directory = '/volume/casedata/'
+else:
+	butter_directory = '/volume/casedata/EPBG/'
 
 print 'Using jtac-tools server %s' %jtactools
 print 'FTP location is %s%s' %(ftp_directory,case)
